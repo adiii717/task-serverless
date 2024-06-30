@@ -1,0 +1,52 @@
+service: CyberneticTask
+
+custom:
+  serverless-artifact-path: ./artifacts/
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  profile: task
+  region: us-west-2
+  environment:
+    DYNAMODB_TABLE: user
+    SNS_TOPIC_ARN: !Ref UserValidationTopic 
+  iam:
+    role:
+      statements:
+        # Allow functions to read/write objects in a bucket
+        - Effect: Allow
+          Action:
+            - 'dynamodb:GetItem'
+            - 'dynamodb:PutItem'
+            - 'dynamodb:Query'
+          Resource:
+            - 'arn:aws:dynamodb:::table/users'
+functions:
+  validateUser:
+    handler: handler.validateUser
+    events:
+      - http:
+          path: validate-user
+          method: post
+
+
+resources:
+  Resources:
+    UserValidationTopic:
+      Type: AWS::SNS::Topic
+      Properties:
+        TopicName: UserValidationTopic 
+    UsersTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: users
+        AttributeDefinitions:
+          - AttributeName: useremail
+            AttributeType: S
+        KeySchema:
+          - AttributeName: useremail
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
