@@ -1,9 +1,9 @@
-## Live Deployment
+# Live Deployment
 
 To Deploy it to AWS, make sure to configure AWS profile and then run the following command
 
 
-# Deploy the whole infrastructure with just one step
+### Deploy the whole infrastructure with just one step
 
 ```sh
 # on fresh install
@@ -13,7 +13,7 @@ export AWS_PROFILE=profilename && npm run deploy
 ```
 
 
-## Local Testing
+### Local Testing
 
 To Invoke the function locally, run the following command
 It will also pass the test event file that lamda expects for user validation
@@ -24,14 +24,14 @@ npm run local-invoke
 
 
 
-# Destroy the infrastructure
+### Destroy the infrastructure
 
 ```sh
 npm run destory
 ```
 
 
-# Default user that generated at deployment
+### Default user that generated at deployment
 
 ```sh
 email: adil@gmail.com
