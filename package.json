@@ -4,7 +4,7 @@
   "main": "handler.js",
   "scripts": {
     "deploy": "export PATH=$(npm bin):$PATH && serverless deploy",
-    "local-invoke": "npx serverless invoke local --function validateUser --path ./test/validateUser.json",
+    "local-invoke": "npx serverless invoke local --function UserLoginHandler --path ./test/validateUser.json",
     "destory": "export PATH=$(npm bin):$PATH && serverless remove "
   },
   "devDependencies": {
