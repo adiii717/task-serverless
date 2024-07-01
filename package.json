@@ -3,10 +3,16 @@
   "version": "1.0.0",
   "main": "handler.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "deploy": "export PATH=$(npm bin):$PATH &&   serverless deploy",
+    "local-invoke": "npx serverless invoke local --function validateUser --path ./event-validate.json"
   },
   "devDependencies": {
-    "serverless": "^4.1.7"
+    "bcryptjs": "^2.4.3",
+    "serverless": "^4.1.7",
+    "serverless-iam-roles-per-function": "^3.2.0",
+    "serverless-plugin-scripts": "^1.0.2",
+    "speakeasy": "^2.0.0",
+    "uuid": "^10.0.0"
   },
   "author": "",
   "license": "ISC",
