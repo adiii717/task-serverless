@@ -31,4 +31,10 @@ npm run destory
 ```
 
 
+# Default user that generated at deployment
+
+```sh
+email: adil@gmail.com
+password: admin
+```
 
