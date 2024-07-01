@@ -7,6 +7,10 @@ AWS.config.update({
 
 var ddb = new AWS.DynamoDB({ apiVersion: "2012-08-10" });
 
+// Default email and password
+const defaultEmail = "adil@gmail.com";
+const defaultPassword = "admin";
+
 // Function to compare passwords
 function comparePasswords(storedPassword, inputPassword) {
   // Implement your comparison logic here
@@ -17,8 +21,8 @@ function comparePasswords(storedPassword, inputPassword) {
 var putParams = {
   TableName: "UsersTable",
   Item: {
-    useremail: { S: "adil@gmail.com" },
-    password: { S: "admin" },
+    useremail: { S: defaultEmail },
+    password: { S: defaultPassword },
   },
 };
 
@@ -35,27 +39,6 @@ ddb.putItem(putParams, function (err, data) {
 var getParams = {
   TableName: "UsersTable",
   Key: {
-    useremail: { S: "adil@gmail.com" },
+    useremail: { S: defaultEmail },
   }
 };
-
-// Call DynamoDB to read the item from the table
-ddb.getItem(getParams, function (err, data) {
-  if (err) {
-    console.log("Error getting item:", err);
-  } else {
-    if (data.Item) {
-      // Item found, now compare passwords
-      var storedPassword = data.Item.password.S; // Assuming password is stored as a string attribute
-      var inputPassword = "admin"; // Example input password to compare
-
-      if (comparePasswords(storedPassword, inputPassword)) {
-        console.log("Passwords match!");
-      } else {
-        console.log("Passwords do not match!");
-      }
-    } else {
-      console.log("No item found for useremail: adil@gmail.com");
-    }
-  }
-});

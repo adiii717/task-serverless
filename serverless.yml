@@ -3,20 +3,33 @@ service: CyberneticTask
 provider:
   name: aws
   runtime: nodejs20.x
-  profile: task
-  region: us-west-2
+  region: "us-west-2"
   environment:
     DYNAMODB_TABLE: !Ref UsersTable
     SNS_TOPIC_ARN:  !Ref UserValidationTopic 
 
+plugins:
+  - serverless-iam-roles-per-function
+  - serverless-plugin-scripts
+  - serverless-plugin-lambda-insights
+  - serverless-associate-waf
+
 functions:
-  validateUser:
-    handler: handler.validateUser
+  GetLoginFormHandler:
+    handler: handler.GetLoginFormHandler
     events:
       - http:
-          path: validate-user
+          path: /login
+          method: get
+          cors: true
+  UserLoginHandler:
+    lambdaInsights: true
+    handler: handler.UserLoginHandler
+    events:
+      - http:
+          path: /login
           method: post
-    iamRoleStatementsName: validateuser-lambda-role
+    iamRoleStatementsName: UserLoginHandler-lambda-role
     iamRoleStatements:
       - Effect: Allow
         Action: 
@@ -35,11 +48,15 @@ functions:
         Resource:
           - Fn::GetAtt: [UsersTable, Arn] 
   2faAuth:
+    lambdaInsights: true
     handler: handler.processUserValidation
     events:
       - sns:
           arn: !Ref UserValidationTopic 
           topicName: UserValidationTopic
+      - http:
+          path: /login/2fa
+          method: post
     iamRoleStatementsName: 2faauth-lambda-role
     iamRoleStatements:
       - Effect: Allow
@@ -64,10 +81,12 @@ functions:
 
 resources:
   Resources:
+    # SNS topic 
     UserValidationTopic:
       Type: AWS::SNS::Topic
       Properties:
         TopicName: UserValidationTopic 
+    # DynamoDB
     UsersTable:
       Type: AWS::DynamoDB::Table
       Properties:
@@ -81,14 +100,43 @@ resources:
         ProvisionedThroughput:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 1
-
+    # WAF
+    WAFRegionalWebACL:
+      Type: "AWS::WAFv2::WebACL"  
+      Properties:
+        Name: ApiGateway-WAF
+        Scope: REGIONAL
+        Description: API Gateway ACL to Prevent HTTP Flood Attack
+        DefaultAction:
+          Allow: {}
+        VisibilityConfig:
+          SampledRequestsEnabled: true
+          CloudWatchMetricsEnabled: true
+          MetricName: ApiGateway-WAF-HTTP
+        Rules:
+          - Name: ApiGateway-WAF-HTTP-Flood-Prevent-Rule
+            Priority: 0
+            Action:
+              Block: {}
+            VisibilityConfig:
+              SampledRequestsEnabled: true
+              CloudWatchMetricsEnabled: true
+              MetricName: ApiGateway-WAF-HTTP-Flood-Prevent-Rule-Metric
+            Statement:
+              RateBasedStatement:
+                AggregateKeyType: IP
+                Limit: 2000
 
 custom:
-  sesVerifyEmail:
-    commands:
-      verifyEmailIdentity:
-        command: aws ses verify-email-identity --email-address adilm717@gmail.com
+  betterCredentials:
+    enabled: true
+  scripts:
+    hooks:
+      'package:initialize':   echo "It will be using default profile ${AWS_PROFILE} to set profile run export AWS_PROFILE=profilename"
+      'deploy:finalize': |
+         aws dynamodb put-item --table-name UsersTable --item '{"useremail": {"S": "adil@gmail.com"}, "password": {"S": "admin"}}'
+  associateWaf:
+    name: ApiGateway-WAF
+    version: V2
 
-plugins:
-  - serverless-iam-roles-per-function
-  - serverless-plugin-scripts
+
